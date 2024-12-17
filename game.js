@@ -11,6 +11,8 @@ let player = { x: 0, y: 0 };
 let hasRandomBot = false;
 let hasSmartBot = false;
 let botInterval = null;
+let isManualControl = false;
+let resumeTimeout = null;
 
 const config = {
     points: 0,
@@ -103,11 +105,35 @@ function draw() {
 
 document.addEventListener('keydown', (e) => {
     if (hasRandomBot || hasSmartBot) {
+        if (!isManualControl) {
+            clearInterval(botInterval);
+            isManualControl = true;
+        }
 
-        clearInterval(botInterval);
-        hasRandomBot = false;
-        hasSmartBot = false;
-        updateUI();
+        if (resumeTimeout) {
+            clearTimeout(resumeTimeout);
+        }
+
+        const key = e.key;
+        let newX = player.x;
+        let newY = player.y;
+
+        if (key === 'ArrowRight' && !maze[player.y][player.x].walls[1]) newX++;
+        if (key === 'ArrowLeft' && !maze[player.y][player.x].walls[3]) newX--;
+        if (key === 'ArrowDown' && !maze[player.y][player.x].walls[2]) newY++;
+        if (key === 'ArrowUp' && !maze[player.y][player.x].walls[0]) newY--;
+
+        player.x = newX;
+        player.y = newY;
+        draw();
+        checkWin();
+
+        resumeTimeout = setTimeout(() => {
+            isManualControl = false;
+            if (hasRandomBot) startRandomBot();
+            if (hasSmartBot) startSmartBot();
+        }, 2000);
+
         return;
     }
 
@@ -212,7 +238,9 @@ document.getElementById('memoryUpgrade').addEventListener('click', () => {
 
 function startRandomBot() {
     const baseInterval = 200;
+    isManualControl = false;
     botInterval = setInterval(() => {
+        if (isManualControl) return;
         const possible = [];
         const currentPos = `${player.x},${player.y}`;
 
@@ -250,7 +278,9 @@ function startRandomBot() {
 
 function startSmartBot() {
     const baseInterval = 150;
+    isManualControl = false;
     botInterval = setInterval(() => {
+        if (isManualControl) return;
         const path = findPath();
         if (path.length > 0) {
             const [newX, newY] = path[1];
