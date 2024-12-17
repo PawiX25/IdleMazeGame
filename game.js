@@ -25,7 +25,10 @@ const config = {
     memoryCost: 200,
     completion_bonus: 50,
     visited_positions: new Set(),
-}
+};
+
+let smartBotPath = [];
+let smartBotIndex = 0;
 
 function saveGame() {
     const saveData = {
@@ -45,11 +48,11 @@ function loadGame() {
         config.visited_positions = new Set(data.visited_positions);
         hasRandomBot = data.hasRandomBot;
         hasSmartBot = data.hasSmartBot;
-        
+
+        updateUI();
+
         if (hasRandomBot) startRandomBot();
         if (hasSmartBot) startSmartBot();
-        
-        updateUI();
     }
 }
 
@@ -162,6 +165,7 @@ function moveToEnd() {
 }
 
 document.addEventListener('keydown', (e) => {
+    const key = e.key;
     if (hasRandomBot || hasSmartBot) {
         if (!isManualControl) {
             clearInterval(botInterval);
@@ -172,7 +176,6 @@ document.addEventListener('keydown', (e) => {
             clearTimeout(resumeTimeout);
         }
 
-        const key = e.key;
         let newX = player.x;
         let newY = player.y;
 
@@ -200,7 +203,6 @@ document.addEventListener('keydown', (e) => {
         return;
     }
 
-    const key = e.key;
     let newX = player.x;
     let newY = player.y;
 
@@ -237,6 +239,10 @@ function checkWin() {
         config.visited_positions.clear();
         currentPath = [];
         draw();
+
+        if (hasSmartBot && !isManualControl) {
+            startSmartBot();
+        }
     }
 }
 
@@ -310,6 +316,7 @@ document.getElementById('memoryUpgrade').addEventListener('click', () => {
 function startRandomBot() {
     const baseInterval = 200;
     isManualControl = false;
+    if (botInterval) clearInterval(botInterval);
     botInterval = setInterval(() => {
         if (isManualControl) return;
         
@@ -348,34 +355,48 @@ function startRandomBot() {
             draw();
             checkWin();
         } else if (config.memoryLevel > 0) {
-
             config.visited_positions.clear();
         }
     }, baseInterval / config.botSpeed);
 }
 
 function startSmartBot() {
-    const baseInterval = 150;
     isManualControl = false;
-    botInterval = setInterval(() => {
-        if (isManualControl) return;
+    if (botInterval) clearInterval(botInterval);
 
-        if (isNextToEnd(player.x, player.y)) {
-            moveToEnd();
-            return;
-        }
+    smartBotPath = findPath();
+    smartBotIndex = 0;
 
-        const path = findPath();
-        if (path.length > 0) {
-            currentPath = path;
-            const [newX, newY] = path[1];
-            player.x = newX;
-            player.y = newY;
-            config.visited_positions.add(`${newX},${newY}`);
-            draw();
-            checkWin();
-        }
-    }, baseInterval / config.botSpeed);
+    currentPath = smartBotPath.slice(); 
+    draw();
+
+    const baseInterval = 150;
+    if (smartBotPath.length > 1) {
+        botInterval = setInterval(() => {
+            if (isManualControl) return;
+
+            if (isNextToEnd(player.x, player.y)) {
+                moveToEnd();
+                return;
+            }
+
+            if (smartBotIndex < smartBotPath.length - 1) {
+                smartBotIndex++;
+                const [nx, ny] = smartBotPath[smartBotIndex];
+                player.x = nx;
+                player.y = ny;
+                config.visited_positions.add(`${nx},${ny}`);
+                draw();
+                checkWin();
+            } else {
+                smartBotPath = findPath();
+                smartBotIndex = 0;
+                currentPath = smartBotPath.slice(); 
+                draw();
+            }
+        }, baseInterval / config.botSpeed);
+    } else {
+    }
 }
 
 function findPath() {
@@ -407,7 +428,7 @@ function findPath() {
         }
         if (!maze[y][x].walls[0] && !visited.has(`${x},${y-1}`)) {
             queue.push([x, y-1]);
-            parent.set(`${x, y-1}`, [x, y]);
+            parent.set(`${x},${y-1}`, [x, y]);
         }
     }
     return [];
@@ -424,8 +445,8 @@ function reconstructPath(parent, end) {
     return path;
 }
 
-loadGame();
 initMaze();
+loadGame();
 updateUI();
 
 setInterval(saveGame, 30000);
