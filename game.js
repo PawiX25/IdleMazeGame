@@ -129,6 +129,22 @@ function draw() {
     ctx.fill();
 }
 
+function isNextToEnd(x, y) {
+    return (
+        (x === cols - 2 && y === rows - 1 && !maze[y][x].walls[1]) ||
+        (x === cols - 1 && y === rows - 2 && !maze[y][x].walls[2]) ||
+        (x === cols && y === rows - 1 && !maze[y][x].walls[3]) ||
+        (x === cols - 1 && y === rows && !maze[y][x].walls[0])
+    );
+}
+
+function moveToEnd() {
+    player.x = cols - 1;
+    player.y = rows - 1;
+    draw();
+    checkWin();
+}
+
 document.addEventListener('keydown', (e) => {
     if (hasRandomBot || hasSmartBot) {
         if (!isManualControl) {
@@ -148,6 +164,11 @@ document.addEventListener('keydown', (e) => {
         if (key === 'ArrowLeft' && !maze[player.y][player.x].walls[3]) newX--;
         if (key === 'ArrowDown' && !maze[player.y][player.x].walls[2]) newY++;
         if (key === 'ArrowUp' && !maze[player.y][player.x].walls[0]) newY--;
+
+        if (isNextToEnd(newX, newY)) {
+            moveToEnd();
+            return;
+        }
 
         player.x = newX;
         player.y = newY;
@@ -171,6 +192,11 @@ document.addEventListener('keydown', (e) => {
     if (key === 'ArrowLeft' && !maze[player.y][player.x].walls[3]) newX--;
     if (key === 'ArrowDown' && !maze[player.y][player.x].walls[2]) newY++;
     if (key === 'ArrowUp' && !maze[player.y][player.x].walls[0]) newY--;
+
+    if (isNextToEnd(newX, newY)) {
+        moveToEnd();
+        return;
+    }
 
     player.x = newX;
     player.y = newY;
@@ -269,6 +295,12 @@ function startRandomBot() {
     isManualControl = false;
     botInterval = setInterval(() => {
         if (isManualControl) return;
+        
+        if (isNextToEnd(player.x, player.y)) {
+            moveToEnd();
+            return;
+        }
+
         const possible = [];
         const currentPos = `${player.x},${player.y}`;
 
@@ -309,6 +341,12 @@ function startSmartBot() {
     isManualControl = false;
     botInterval = setInterval(() => {
         if (isManualControl) return;
+
+        if (isNextToEnd(player.x, player.y)) {
+            moveToEnd();
+            return;
+        }
+
         const path = findPath();
         if (path.length > 0) {
             const [newX, newY] = path[1];
