@@ -26,6 +26,32 @@ const config = {
     visited_positions: new Set(),
 }
 
+function saveGame() {
+    const saveData = {
+        ...config,
+        visited_positions: Array.from(config.visited_positions),
+        hasRandomBot,
+        hasSmartBot
+    };
+    localStorage.setItem('idleMazeGame', JSON.stringify(saveData));
+}
+
+function loadGame() {
+    const savedData = localStorage.getItem('idleMazeGame');
+    if (savedData) {
+        const data = JSON.parse(savedData);
+        Object.assign(config, data);
+        config.visited_positions = new Set(data.visited_positions);
+        hasRandomBot = data.hasRandomBot;
+        hasSmartBot = data.hasSmartBot;
+        
+        if (hasRandomBot) startRandomBot();
+        if (hasSmartBot) startSmartBot();
+        
+        updateUI();
+    }
+}
+
 function initMaze() {
 
     maze = [];
@@ -183,6 +209,8 @@ function updateUI() {
     document.getElementById('randomBot').disabled = config.points < 100 || hasRandomBot || hasSmartBot;
     document.getElementById('smartBot').disabled = config.points < 500 || hasRandomBot || hasSmartBot;
     document.getElementById('memoryUpgrade').disabled = config.points < config.memoryCost || !hasRandomBot;
+
+    saveGame();
 }
 
 document.getElementById('randomBot').addEventListener('click', () => {
@@ -338,5 +366,8 @@ function reconstructPath(parent, end) {
     return path;
 }
 
+loadGame();
 initMaze();
 updateUI();
+
+setInterval(saveGame, 30000);
