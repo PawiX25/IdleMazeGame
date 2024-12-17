@@ -13,6 +13,7 @@ let hasSmartBot = false;
 let botInterval = null;
 let isManualControl = false;
 let resumeTimeout = null;
+let currentPath = [];
 
 const config = {
     points: 0,
@@ -86,6 +87,21 @@ function generateMaze(x, y) {
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (hasRandomBot || hasSmartBot) {
+        ctx.fillStyle = 'rgba(135, 206, 235, 0.2)';
+        config.visited_positions.forEach(pos => {
+            const [x, y] = pos.split(',').map(Number);
+            ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+        });
+
+        if (hasSmartBot && currentPath.length > 0) {
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+            currentPath.forEach(([x, y]) => {
+                ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+            });
+        }
+    }
 
     ctx.lineWidth = 2;
     for (let y = 0; y < rows; y++) {
@@ -219,6 +235,7 @@ function checkWin() {
         initMaze(); 
         player = { x: 0, y: 0 };
         config.visited_positions.clear();
+        currentPath = [];
         draw();
     }
 }
@@ -327,6 +344,7 @@ function startRandomBot() {
             const [dx, dy] = possible[Math.floor(Math.random() * possible.length)];
             player.x += dx;
             player.y += dy;
+            config.visited_positions.add(`${player.x},${player.y}`);
             draw();
             checkWin();
         } else if (config.memoryLevel > 0) {
@@ -349,9 +367,11 @@ function startSmartBot() {
 
         const path = findPath();
         if (path.length > 0) {
+            currentPath = path;
             const [newX, newY] = path[1];
             player.x = newX;
             player.y = newY;
+            config.visited_positions.add(`${newX},${newY}`);
             draw();
             checkWin();
         }
