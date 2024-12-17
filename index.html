@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Idle Maze Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f5f5f5;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        canvas {
+            border: 2px solid #4a4a4a;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 4px;
+            background-color: #4a4a4a;
+            color: white;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        button:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+        .game-container {
+            display: flex;
+            gap: 20px;
+        }
+        .upgrades {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .stat {
+            font-weight: bold;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <canvas id="mazeCanvas" width="400" height="400"></canvas>
+        <div class="upgrades">
+            <h3>Stats</h3>
+            <div class="stat">Points: <span id="points">0</span></div>
+            <div class="stat">Multiplier: <span id="multiplier">1</span>x</div>
+            
+            <h3>Bots</h3>
+            <button id="randomBot" disabled>Random Bot (100 pts)</button>
+            <button id="smartBot" disabled>Smart Bot (500 pts)</button>
+            
+            <h3>Upgrades</h3>
+            <button id="speedUpgrade">Speed ↑ (<span id="speedCost">50</span> pts)</button>
+            <div class="stat">Current Speed: <span id="currentSpeed">1</span>x</div>
+            
+            <button id="multiplierUpgrade">Point Multiplier ↑ (<span id="multiplierCost">100</span> pts)</button>
+            
+            <button id="memoryUpgrade" disabled>Bot Memory ↑ (<span id="memoryCost">200</span> pts)</button>
+            <div class="stat">Memory Level: <span id="memoryLevel">0</span></div>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
