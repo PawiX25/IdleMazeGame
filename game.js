@@ -25,6 +25,8 @@ const config = {
     memoryCost: 200,
     completion_bonus: 50,
     visited_positions: new Set(),
+    pointsPerTile: 1,
+    tilePointsCost: 75,
 };
 
 let smartBotPath = [];
@@ -254,12 +256,21 @@ function updateUI() {
     document.getElementById('speedCost').textContent = config.speedCost;
     document.getElementById('multiplierCost').textContent = config.multiplierCost;
     document.getElementById('memoryCost').textContent = config.memoryCost;
+    document.getElementById('tilePointsCost').textContent = config.tilePointsCost;
+    document.getElementById('pointsPerTile').textContent = config.pointsPerTile;
 
     document.getElementById('randomBot').disabled = config.points < 100 || hasRandomBot || hasSmartBot;
     document.getElementById('smartBot').disabled = config.points < 500 || hasRandomBot || hasSmartBot;
     document.getElementById('memoryUpgrade').disabled = config.points < config.memoryCost || !hasRandomBot;
 
     saveGame();
+}
+
+function awardPointsForNewTile(position) {
+    if (!config.visited_positions.has(position)) {
+        config.points += config.pointsPerTile * config.multiplier;
+        updateUI();
+    }
 }
 
 document.getElementById('randomBot').addEventListener('click', () => {
@@ -313,6 +324,15 @@ document.getElementById('memoryUpgrade').addEventListener('click', () => {
     }
 });
 
+document.getElementById('tilePointsUpgrade').addEventListener('click', () => {
+    if (config.points >= config.tilePointsCost) {
+        config.points -= config.tilePointsCost;
+        config.pointsPerTile += 1;
+        config.tilePointsCost = Math.floor(config.tilePointsCost * 1.5);
+        updateUI();
+    }
+});
+
 function startRandomBot() {
     const baseInterval = 200;
     isManualControl = false;
@@ -351,7 +371,9 @@ function startRandomBot() {
             const [dx, dy] = possible[Math.floor(Math.random() * possible.length)];
             player.x += dx;
             player.y += dy;
-            config.visited_positions.add(`${player.x},${player.y}`);
+            const newPos = `${player.x},${player.y}`;
+            awardPointsForNewTile(newPos);
+            config.visited_positions.add(newPos);
             draw();
             checkWin();
         } else if (config.memoryLevel > 0) {
@@ -385,7 +407,9 @@ function startSmartBot() {
                 const [nx, ny] = smartBotPath[smartBotIndex];
                 player.x = nx;
                 player.y = ny;
-                config.visited_positions.add(`${nx},${ny}`);
+                const newPos = `${nx},${ny}`;
+                awardPointsForNewTile(newPos);
+                config.visited_positions.add(newPos);
                 draw();
                 checkWin();
             } else {
@@ -428,7 +452,7 @@ function findPath() {
         }
         if (!maze[y][x].walls[0] && !visited.has(`${x},${y-1}`)) {
             queue.push([x, y-1]);
-            parent.set(`${x},${y-1}`, [x, y]);
+            parent.set(`${x, y-1}`, [x, y]);
         }
     }
     return [];
