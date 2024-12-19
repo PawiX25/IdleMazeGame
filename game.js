@@ -1,7 +1,7 @@
 const canvas = document.getElementById('mazeCanvas');
 const ctx = canvas.getContext('2d');
-const cols = 10;
-const rows = 10;
+let cols = 10;
+let rows = 10;
 
 let cellSize;
 
@@ -41,6 +41,8 @@ const config = {
     visited_positions: new Set(),
     pointsPerTile: 1,
     tilePointsCost: 75,
+    mazeSizeCost: 1000,
+    mazeSize: 10,
 };
 
 let smartBotPath = [];
@@ -64,6 +66,8 @@ function loadGame() {
         config.visited_positions = new Set(data.visited_positions);
         hasRandomBot = data.hasRandomBot;
         hasSmartBot = data.hasSmartBot;
+        cols = config.mazeSize;
+        rows = config.mazeSize;
 
         updateUI();
 
@@ -272,6 +276,8 @@ function updateUI() {
     document.getElementById('memoryCost').textContent = config.memoryCost;
     document.getElementById('tilePointsCost').textContent = config.tilePointsCost;
     document.getElementById('pointsPerTile').textContent = config.pointsPerTile;
+    document.getElementById('mazeSizeCost').textContent = config.mazeSizeCost;
+    document.getElementById('mazeSize').textContent = `${config.mazeSize}x${config.mazeSize}`;
 
     document.getElementById('randomBot').disabled = config.points < 100 || hasRandomBot || hasSmartBot;
     document.getElementById('smartBot').disabled = config.points < 500 || hasRandomBot || hasSmartBot;
@@ -343,6 +349,19 @@ document.getElementById('tilePointsUpgrade').addEventListener('click', () => {
         config.points -= config.tilePointsCost;
         config.pointsPerTile += 1;
         config.tilePointsCost = Math.floor(config.tilePointsCost * 1.5);
+        updateUI();
+    }
+});
+
+document.getElementById('mazeSizeUpgrade').addEventListener('click', () => {
+    if (config.points >= config.mazeSizeCost) {
+        config.points -= config.mazeSizeCost;
+        config.mazeSize += 2;
+        cols = config.mazeSize;
+        rows = config.mazeSize;
+        config.mazeSizeCost = Math.floor(config.mazeSizeCost * 2);
+        config.completion_bonus = Math.floor(config.completion_bonus * 1.5);
+        initMaze();
         updateUI();
     }
 });
