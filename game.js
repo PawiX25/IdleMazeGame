@@ -1,10 +1,24 @@
 const canvas = document.getElementById('mazeCanvas');
 const ctx = canvas.getContext('2d');
-const cellSize = 40;
 const cols = 10;
 const rows = 10;
-canvas.width = cols * cellSize;
-canvas.height = rows * cellSize;
+
+let cellSize;
+
+function calculateSize() {
+    const maxSize = Math.min(window.innerWidth - 100, window.innerHeight - 100);
+    const size = Math.min(maxSize, 600);
+    cellSize = Math.floor(size / cols);
+    canvas.width = cellSize * cols;
+    canvas.height = cellSize * rows;
+}
+
+window.addEventListener('resize', () => {
+    calculateSize();
+    draw();
+});
+
+calculateSize();
 
 let maze = [];
 let player = { x: 0, y: 0 };
@@ -59,7 +73,7 @@ function loadGame() {
 }
 
 function initMaze() {
-
+    calculateSize(); // Recalculate size when creating new maze
     maze = [];
     for (let y = 0; y < rows; y++) {
         maze[y] = [];
