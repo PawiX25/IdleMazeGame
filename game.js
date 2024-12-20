@@ -13,6 +13,20 @@ function toggleDarkMode() {
 
 document.getElementById('themeToggle').addEventListener('click', toggleDarkMode);
 
+const fullscreenToggle = document.getElementById('fullscreenToggle');
+
+fullscreenToggle.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+            alert(`Error enabling fullscreen: ${err.message}`);
+        });
+        fullscreenToggle.textContent = "Exit Fullscreen";
+    } else {
+        document.exitFullscreen();
+        fullscreenToggle.textContent = "Fullscreen";
+    }
+});
+
 if (isDarkMode) {
     document.body.classList.add('dark-mode');
 }
@@ -560,3 +574,104 @@ loadGame();
 updateUI();
 
 setInterval(saveGame, 30000);
+
+const upBtn = document.getElementById('upBtn');
+const downBtn = document.getElementById('downBtn');
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+
+function movePlayer(direction) {
+    if (hasRandomBot || hasSmartBot) {
+        if (!isManualControl) {
+            clearInterval(botInterval);
+            isManualControl = true;
+        }
+
+        if (resumeTimeout) {
+            clearTimeout(resumeTimeout);
+        }
+    }
+
+    let newX = player.x;
+    let newY = player.y;
+
+    switch(direction) {
+        case 'up':
+            if (!maze[player.y][player.x].walls[0]) newY--;
+            break;
+        case 'down':
+            if (!maze[player.y][player.x].walls[2]) newY++;
+            break;
+        case 'left':
+            if (!maze[player.y][player.x].walls[3]) newX--;
+            break;
+        case 'right':
+            if (!maze[player.y][player.x].walls[1]) newX++;
+            break;
+    }
+
+    if (isNextToEnd(newX, newY)) {
+        moveToEnd();
+        return;
+    }
+
+    player.x = newX;
+    player.y = newY;
+    draw();
+    checkWin();
+
+    if (hasRandomBot || hasSmartBot) {
+        resumeTimeout = setTimeout(() => {
+            isManualControl = false;
+            if (hasRandomBot) startRandomBot();
+            if (hasSmartBot) startSmartBot();
+        }, 2000);
+    }
+}
+
+upBtn.addEventListener('click', () => movePlayer('up'));
+downBtn.addEventListener('click', () => movePlayer('down'));
+leftBtn.addEventListener('click', () => movePlayer('left'));
+rightBtn.addEventListener('click', () => movePlayer('right'));
+
+let touchStartX = 0;
+let touchStartY = 0;
+let touchEndX = 0;
+let touchEndY = 0;
+const minSwipeDistance = 30;
+
+canvas.addEventListener('touchstart', (e) => {
+    const touch = e.changedTouches[0];
+    touchStartX = touch.screenX;
+    touchStartY = touch.screenY;
+}, false);
+
+canvas.addEventListener('touchend', (e) => {
+    const touch = e.changedTouches[0];
+    touchEndX = touch.screenX;
+    touchEndY = touch.screenY;
+    handleGesture();
+}, false);
+
+function handleGesture() {
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+
+    if (Math.abs(deltaX) < minSwipeDistance && Math.abs(deltaY) < minSwipeDistance) {
+        return;
+    }
+
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        if (deltaX > 0) {
+            movePlayer('right');
+        } else {
+            movePlayer('left');
+        }
+    } else {
+        if (deltaY > 0) {
+            movePlayer('down');
+        } else {
+            movePlayer('up');
+        }
+    }
+}
