@@ -71,7 +71,6 @@
         .theme-toggle, .fullscreen-toggle {
             position: absolute;
             top: 20px;
-            right: 20px;
             padding: 8px 16px;
             border: none;
             border-radius: 4px;
@@ -79,7 +78,16 @@
             color: white;
             cursor: pointer;
             font-size: 14px;
-            margin-left: 10px;
+        }
+
+        .theme-toggle {
+            right: 180px;
+        }
+
+        .fullscreen-toggle {
+            right: 20px;
+            min-width: 150px;
+            text-align: center;
         }
         
         body.dark-mode {
@@ -105,6 +113,7 @@
             .game-container {
                 flex-direction: column;
                 align-items: center;
+                margin-top: 70px;
             }
             .upgrades {
                 max-width: 100%;
@@ -113,9 +122,13 @@
                 max-width: 90vw;
             }
             .theme-toggle, .fullscreen-toggle {
-                top: auto;
-                bottom: 20px;
-                right: 20px;
+                top: 10px;
+            }
+            .theme-toggle {
+                right: 160px;
+            }
+            .fullscreen-toggle {
+                min-width: 140px;
             }
             .touch-controls {
                 display: flex;
