@@ -9,6 +9,7 @@ function toggleDarkMode() {
     document.body.classList.toggle('dark-mode', isDarkMode);
     localStorage.setItem('darkMode', isDarkMode);
     draw(); 
+}
 
 document.getElementById('themeToggle').addEventListener('click', toggleDarkMode);
 
@@ -90,7 +91,7 @@ function loadGame() {
 }
 
 function initMaze() {
-    calculateSize(); // Recalculate size when creating new maze
+    calculateSize();
     maze = [];
     for (let y = 0; y < rows; y++) {
         maze[y] = [];
@@ -101,6 +102,7 @@ function initMaze() {
 
     generateMaze(0, 0);
     player = { x: 0, y: 0 };
+    config.visited_positions.clear();
     draw();
 }
 
@@ -113,7 +115,6 @@ function generateMaze(x, y) {
         const newY = y + (dir === 2 ? 1 : dir === 0 ? -1 : 0);
 
         if (newX >= 0 && newX < cols && newY >= 0 && newY < rows && !maze[newY][newX].visited) {
-
             maze[y][x].walls[dir] = false;
             maze[newY][newX].walls[(dir + 2) % 4] = false;
             generateMaze(newX, newY);
@@ -156,6 +157,7 @@ function draw() {
         }
     }
 
+    // Draw player
     ctx.fillStyle = '#ff6b6b';
     const padding = cellSize * 0.2;
     const size = cellSize - padding * 2;
@@ -169,6 +171,7 @@ function draw() {
     );
     ctx.fill();
 
+    // Draw end point
     ctx.fillStyle = '#51cf66';
     ctx.beginPath();
     ctx.roundRect(
@@ -303,6 +306,7 @@ function awardPointsForNewTile(position) {
     if (!config.visited_positions.has(position)) {
         config.points += config.pointsPerTile * config.multiplier;
         updateUI();
+        config.visited_positions.add(position);
     }
 }
 
@@ -419,21 +423,32 @@ function startRandomBot() {
             player.y += dy;
             const newPos = `${player.x},${player.y}`;
             awardPointsForNewTile(newPos);
-            config.visited_positions.add(newPos);
             draw();
             checkWin();
         } else if (config.memoryLevel > 0) {
             config.visited_positions.clear();
         }
-    }, baseInterval / config.botSpeed);
+    }, Math.max(baseInterval / config.botSpeed, 50));
 }
 
 function startSmartBot() {
     isManualControl = false;
     if (botInterval) clearInterval(botInterval);
 
+    player = { x: 0, y: 0 };
+    config.visited_positions.clear();
+    draw();
+
     smartBotPath = findPath();
     smartBotIndex = 0;
+
+    if (smartBotPath.length === 0) {
+        return;
+    }
+
+    if (smartBotPath[0][0] !== player.x || smartBotPath[0][1] !== player.y) {
+        smartBotPath.unshift([player.x, player.y]);
+    }
 
     currentPath = smartBotPath.slice(); 
     draw();
@@ -461,11 +476,14 @@ function startSmartBot() {
             } else {
                 smartBotPath = findPath();
                 smartBotIndex = 0;
+                if (smartBotPath.length === 0) {
+                    clearInterval(botInterval);
+                    return;
+                }
                 currentPath = smartBotPath.slice(); 
                 draw();
             }
-        }, baseInterval / config.botSpeed);
-    } else {
+        }, Math.max(baseInterval / config.botSpeed, 50));
     }
 }
 
@@ -484,21 +502,43 @@ function findPath() {
         if (visited.has(key)) continue;
         visited.add(key);
 
-        if (!maze[y][x].walls[1] && !visited.has(`${x+1},${y}`)) {
-            queue.push([x+1, y]);
-            parent.set(`${x+1},${y}`, [x, y]);
-        }
-        if (!maze[y][x].walls[3] && !visited.has(`${x-1},${y}`)) {
-            queue.push([x-1, y]);
-            parent.set(`${x-1},${y}`, [x, y]);
-        }
-        if (!maze[y][x].walls[2] && !visited.has(`${x},${y+1}`)) {
-            queue.push([x, y+1]);
-            parent.set(`${x},${y+1}`, [x, y]);
-        }
-        if (!maze[y][x].walls[0] && !visited.has(`${x},${y-1}`)) {
-            queue.push([x, y-1]);
-            parent.set(`${x, y-1}`, [x, y]);
+        const directions = [
+            [x + 1, y], // Right
+            [x - 1, y], // Left
+            [x, y + 1], // Down
+            [x, y - 1]  // Up
+        ];
+
+        for (let i = 0; i < directions.length; i++) {
+            const [newX, newY] = directions[i];
+            let wallIndex;
+
+            switch (i) {
+                case 0: // Right
+                    wallIndex = 1;
+                    break;
+                case 1: // Left
+                    wallIndex = 3;
+                    break;
+                case 2: // Down
+                    wallIndex = 2;
+                    break;
+                case 3: // Up
+                    wallIndex = 0;
+                    break;
+            }
+
+            if (
+                newX >= 0 && newX < cols &&
+                newY >= 0 && newY < rows &&
+                !maze[y][x].walls[wallIndex]
+            ) {
+                const newKey = `${newX},${newY}`;
+                if (!visited.has(newKey)) {
+                    queue.push([newX, newY]);
+                    parent.set(newKey, [x, y]);
+                }
+            }
         }
     }
     return [];
