@@ -2,6 +2,19 @@ const canvas = document.getElementById('mazeCanvas');
 const ctx = canvas.getContext('2d');
 let cols = 10;
 let rows = 10;
+let isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+function toggleDarkMode() {
+    isDarkMode = !isDarkMode;
+    document.body.classList.toggle('dark-mode', isDarkMode);
+    localStorage.setItem('darkMode', isDarkMode);
+    draw(); 
+
+document.getElementById('themeToggle').addEventListener('click', toggleDarkMode);
+
+if (isDarkMode) {
+    document.body.classList.add('dark-mode');
+}
 
 let cellSize;
 
@@ -112,14 +125,14 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (hasRandomBot || hasSmartBot) {
-        ctx.fillStyle = 'rgba(135, 206, 235, 0.2)';
+        ctx.fillStyle = isDarkMode ? 'rgba(100, 149, 237, 0.2)' : 'rgba(135, 206, 235, 0.2)';
         config.visited_positions.forEach(pos => {
             const [x, y] = pos.split(',').map(Number);
             ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
         });
 
         if (hasSmartBot && currentPath.length > 0) {
-            ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+            ctx.fillStyle = isDarkMode ? 'rgba(255, 215, 0, 0.2)' : 'rgba(255, 215, 0, 0.3)';
             currentPath.forEach(([x, y]) => {
                 ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
             });
@@ -133,7 +146,7 @@ function draw() {
             const px = x * cellSize;
             const py = y * cellSize;
 
-            ctx.strokeStyle = '#4a4a4a';
+            ctx.strokeStyle = isDarkMode ? '#888' : '#4a4a4a';
             ctx.beginPath();
             if (cell.walls[0]) { ctx.moveTo(px, py); ctx.lineTo(px + cellSize, py); }
             if (cell.walls[1]) { ctx.moveTo(px + cellSize, py); ctx.lineTo(px + cellSize, py + cellSize); }
